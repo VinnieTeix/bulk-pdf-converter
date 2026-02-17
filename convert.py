@@ -1,4 +1,4 @@
-"""Bulk DOCX to PDF converter using Microsoft Word COM automation."""
+"""Bulk DOCX/ODT to PDF converter using Microsoft Word COM automation."""
 
 import argparse
 import sys
@@ -8,9 +8,11 @@ import win32com.client
 
 
 def convert_docx_to_pdf(input_dir: Path, output_dir: Path) -> None:
-    docx_files = sorted(input_dir.glob("*.docx"))
-    if not docx_files:
-        print(f"No .docx files found in {input_dir}")
+    files = sorted(
+        f for f in input_dir.iterdir() if f.suffix.lower() in (".docx", ".odt")
+    )
+    if not files:
+        print(f"No .docx or .odt files found in {input_dir}")
         return
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -19,23 +21,23 @@ def convert_docx_to_pdf(input_dir: Path, output_dir: Path) -> None:
     word.Visible = False
 
     try:
-        total = len(docx_files)
+        total = len(files)
         success = 0
         failed = []
 
-        for i, docx_path in enumerate(docx_files, 1):
-            pdf_path = output_dir / (docx_path.stem + ".pdf")
-            print(f"[{i}/{total}] {docx_path.name} -> {pdf_path.name}", end=" ")
+        for i, src_path in enumerate(files, 1):
+            pdf_path = output_dir / (src_path.stem + ".pdf")
+            print(f"[{i}/{total}] {src_path.name} -> {pdf_path.name}", end=" ")
 
             try:
-                doc = word.Documents.Open(str(docx_path.resolve()))
+                doc = word.Documents.Open(str(src_path.resolve()))
                 doc.SaveAs(str(pdf_path.resolve()), FileFormat=17)  # 17 = wdFormatPDF
                 doc.Close()
                 print("OK")
                 success += 1
             except Exception as e:
                 print(f"FAILED: {e}")
-                failed.append(docx_path.name)
+                failed.append(src_path.name)
 
         print(f"\nDone: {success}/{total} converted successfully.")
         if failed:
@@ -47,8 +49,8 @@ def convert_docx_to_pdf(input_dir: Path, output_dir: Path) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Bulk convert DOCX files to PDF.")
-    parser.add_argument("input_dir", help="Directory containing .docx files")
+    parser = argparse.ArgumentParser(description="Bulk convert DOCX/ODT files to PDF.")
+    parser.add_argument("input_dir", help="Directory containing .docx or .odt files")
     parser.add_argument(
         "-o", "--output-dir",
         help="Output directory for PDFs (defaults to input_dir)",
