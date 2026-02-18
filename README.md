@@ -22,30 +22,53 @@ pip install pywin32
 
 ## Usage
 
-```bash
-# Convert all supported files in a directory (PDFs saved alongside originals)
-python convert.py "C:\path\to\files"
+Place files in the `input/` folder (subfolders supported), then run:
 
-# Convert to a separate output directory
-python convert.py "C:\path\to\files" -o "C:\path\to\output"
+```bash
+python convert.py
+```
+
+PDFs are saved to `output/`, mirroring the subfolder structure of `input/`.
+
+### Custom directories
+
+```bash
+python convert.py "C:\path\to\source" -o "C:\path\to\output"
 ```
 
 ### Options
 
 | Argument | Description |
 |---|---|
-| `input_dir` | Directory containing files to convert |
-| `-o`, `--output-dir` | Output directory for PDFs (defaults to `input_dir`) |
+| `input_dir` | Source directory (default: `input`) |
+| `-o`, `--output-dir` | Output directory (default: `output`) |
 
 ## Example
 
 ```
-> python convert.py ./documents -o ./pdfs
+input/
+├── ClientA/
+│   ├── report.docx
+│   └── budget.xlsx
+└── ClientB/
+    └── letter.odt
+```
 
-[1/4] report.docx -> report.pdf OK
-[2/4] letter.odt -> letter.pdf OK
-[3/4] budget.xlsx -> budget.pdf OK
-[4/4] data.xls -> data.pdf OK
+```
+> python convert.py
 
-Done: 4/4 converted successfully.
+[1/3] ClientA\report.docx -> ClientA\report.pdf OK
+[2/3] ClientB\letter.odt -> ClientB\letter.pdf OK
+[3/3] ClientA\budget.xlsx -> ClientA\budget.pdf OK
+
+Done: 3/3 converted successfully.
+```
+
+```
+output/
+├── ClientA/
+│   ├── report.pdf
+│   └── budget.pdf
+└── ClientB/
+    └── letter.pdf
 ```

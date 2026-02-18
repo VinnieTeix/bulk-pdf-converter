@@ -11,15 +11,18 @@ EXCEL_EXTENSIONS = {".xlsx", ".xls"}
 ALL_EXTENSIONS = WORD_EXTENSIONS | EXCEL_EXTENSIONS
 
 
-def convert_to_pdf(input_dir: Path, output_dir: Path) -> None:
-    files = sorted(
-        f for f in input_dir.iterdir() if f.suffix.lower() in ALL_EXTENSIONS
+def collect_files(input_dir: Path):
+    """Recursively collect supported files from input_dir and its subdirectories."""
+    return sorted(
+        f for f in input_dir.rglob("*") if f.is_file() and f.suffix.lower() in ALL_EXTENSIONS
     )
+
+
+def convert_to_pdf(input_dir: Path, output_dir: Path) -> None:
+    files = collect_files(input_dir)
     if not files:
         print(f"No supported files found in {input_dir}")
         return
-
-    output_dir.mkdir(parents=True, exist_ok=True)
 
     word_files = [f for f in files if f.suffix.lower() in WORD_EXTENSIONS]
     excel_files = [f for f in files if f.suffix.lower() in EXCEL_EXTENSIONS]
@@ -35,8 +38,11 @@ def convert_to_pdf(input_dir: Path, output_dir: Path) -> None:
         try:
             for src_path in word_files:
                 counter += 1
-                pdf_path = output_dir / (src_path.stem + ".pdf")
-                print(f"[{counter}/{total}] {src_path.name} -> {pdf_path.name}", end=" ")
+                rel = src_path.parent.relative_to(input_dir)
+                dest_dir = output_dir / rel
+                dest_dir.mkdir(parents=True, exist_ok=True)
+                pdf_path = dest_dir / (src_path.stem + ".pdf")
+                print(f"[{counter}/{total}] {rel / src_path.name} -> {rel / pdf_path.name}", end=" ")
                 try:
                     doc = word.Documents.Open(str(src_path.resolve()))
                     doc.SaveAs(str(pdf_path.resolve()), FileFormat=17)  # 17 = wdFormatPDF
@@ -45,7 +51,7 @@ def convert_to_pdf(input_dir: Path, output_dir: Path) -> None:
                     success += 1
                 except Exception as e:
                     print(f"FAILED: {e}")
-                    failed.append(src_path.name)
+                    failed.append(str(rel / src_path.name))
         finally:
             word.Quit()
 
@@ -55,8 +61,11 @@ def convert_to_pdf(input_dir: Path, output_dir: Path) -> None:
         try:
             for src_path in excel_files:
                 counter += 1
-                pdf_path = output_dir / (src_path.stem + ".pdf")
-                print(f"[{counter}/{total}] {src_path.name} -> {pdf_path.name}", end=" ")
+                rel = src_path.parent.relative_to(input_dir)
+                dest_dir = output_dir / rel
+                dest_dir.mkdir(parents=True, exist_ok=True)
+                pdf_path = dest_dir / (src_path.stem + ".pdf")
+                print(f"[{counter}/{total}] {rel / src_path.name} -> {rel / pdf_path.name}", end=" ")
                 try:
                     wb = excel.Workbooks.Open(str(src_path.resolve()))
                     wb.ExportAsFixedFormat(0, str(pdf_path.resolve()))  # 0 = xlTypePDF
@@ -65,7 +74,7 @@ def convert_to_pdf(input_dir: Path, output_dir: Path) -> None:
                     success += 1
                 except Exception as e:
                     print(f"FAILED: {e}")
-                    failed.append(src_path.name)
+                    failed.append(str(rel / src_path.name))
         finally:
             excel.Quit()
 
@@ -78,10 +87,13 @@ def convert_to_pdf(input_dir: Path, output_dir: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Bulk convert DOCX/ODT/XLSX/XLS files to PDF.")
-    parser.add_argument("input_dir", help="Directory containing files to convert")
     parser.add_argument(
-        "-o", "--output-dir",
-        help="Output directory for PDFs (defaults to input_dir)",
+        "input_dir", nargs="?", default="input",
+        help="Directory containing files to convert (default: input)",
+    )
+    parser.add_argument(
+        "-o", "--output-dir", default="output",
+        help="Output directory for PDFs (default: output)",
     )
     args = parser.parse_args()
 
@@ -90,7 +102,7 @@ def main() -> None:
         print(f"Error: {input_dir} is not a directory", file=sys.stderr)
         sys.exit(1)
 
-    output_dir = Path(args.output_dir) if args.output_dir else input_dir
+    output_dir = Path(args.output_dir)
 
     convert_to_pdf(input_dir, output_dir)
 
