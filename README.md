@@ -1,10 +1,17 @@
 # MassDocx2PDF
 
-Bulk convert DOCX files to PDF using Microsoft Word's COM automation on Windows.
+Bulk convert DOCX, ODT, XLSX, and XLS files to PDF using Microsoft Office COM automation on Windows.
+
+## Supported Formats
+
+| Format | Application |
+|---|---|
+| `.docx`, `.odt` | Microsoft Word |
+| `.xlsx`, `.xls` | Microsoft Excel |
 
 ## Prerequisites
 
-- **Windows** with **Microsoft Word** installed
+- **Windows** with **Microsoft Word** and/or **Microsoft Excel** installed
 - **Python 3.7+**
 
 ## Installation
@@ -16,18 +23,18 @@ pip install pywin32
 ## Usage
 
 ```bash
-# Convert all .docx files in a directory (PDFs saved alongside originals)
-python convert.py "C:\path\to\docx\files"
+# Convert all supported files in a directory (PDFs saved alongside originals)
+python convert.py "C:\path\to\files"
 
 # Convert to a separate output directory
-python convert.py "C:\path\to\docx\files" -o "C:\path\to\output"
+python convert.py "C:\path\to\files" -o "C:\path\to\output"
 ```
 
 ### Options
 
 | Argument | Description |
 |---|---|
-| `input_dir` | Directory containing `.docx` files |
+| `input_dir` | Directory containing files to convert |
 | `-o`, `--output-dir` | Output directory for PDFs (defaults to `input_dir`) |
 
 ## Example
@@ -35,9 +42,10 @@ python convert.py "C:\path\to\docx\files" -o "C:\path\to\output"
 ```
 > python convert.py ./documents -o ./pdfs
 
-[1/3] report.docx -> report.pdf OK
-[2/3] invoice.docx -> invoice.pdf OK
-[3/3] letter.docx -> letter.pdf OK
+[1/4] report.docx -> report.pdf OK
+[2/4] letter.odt -> letter.pdf OK
+[3/4] budget.xlsx -> budget.pdf OK
+[4/4] data.xls -> data.pdf OK
 
-Done: 3/3 converted successfully.
+Done: 4/4 converted successfully.
 ```
